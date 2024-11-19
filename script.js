@@ -1,17 +1,16 @@
-// script.js
 let timer;
 let isRunning = false;
-let startTime = null; // Server's global start time
+let startTime = null; 
 let elapsedTime = 0;
 
 const display = document.getElementById('display');
 const startBtn = document.getElementById('startBtn');
+const continueBtn = document.getElementById('continueBtn'); // New continue button
 const stopBtn = document.getElementById('stopBtn');
 const resetBtn = document.getElementById('resetBtn');
 
-const socket = new WebSocket('ws://localhost:8080'); // Connect to WebSocket server
+const socket = new WebSocket('ws://192.168.29.111:8080');
 
-// Handle WebSocket messages
 socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
 
@@ -30,21 +29,27 @@ socket.onmessage = (event) => {
     }
 };
 
-// Start button - sends start message to server
 startBtn.addEventListener('click', () => {
     if (!isRunning) {
         socket.send(JSON.stringify({ type: 'start' }));
     }
 });
 
-// Stop button - pauses timer locally
+continueBtn.addEventListener('click', () => {
+    if (!isRunning) {
+        // Resume the timer
+        startTime = Date.now() - elapsedTime; // Adjust startTime to account for elapsed time
+        isRunning = true;
+        runTimer();
+    }
+});
+
 stopBtn.addEventListener('click', () => {
     clearInterval(timer);
     isRunning = false;
-    elapsedTime = Date.now() - startTime;
+    elapsedTime = Date.now() - startTime; // Calculate elapsed time
 });
 
-// Reset button - sends reset message to server
 resetBtn.addEventListener('click', () => {
     socket.send(JSON.stringify({ type: 'reset' }));
 });
@@ -64,7 +69,7 @@ function formatTime(seconds, milliseconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    const ms = Math.floor(milliseconds / 10); // Convert milliseconds to 0-99
+    const ms = Math.floor(milliseconds / 10);
     return `${pad(hours)}:${pad(minutes)}:${pad(secs)}.${pad(ms, 2)}`;
 }
 
